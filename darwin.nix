@@ -30,8 +30,6 @@
     shell = pkgs.fish;
   };
 
-
-
   ###################################################################################
   #
   #  macOS's System configuration
@@ -53,16 +51,26 @@
     '';
 
     defaults = {
-      # menuExtraClock.Show24Hour = true;  # show 24 hour clock
-      
+      menuExtraClock.Show24Hour = true;  # show 24 hour clock
       # customize dock
       dock = {
         autohide = true;
         show-recents = false;  # disable recent apps
 
         # customize Hot Corners
+          # 1 = -
+          # 2 = Mission Control
+          # 3 = Application Windows
+          # 4 = Desktop
+          # 5 = Start Screen Saver
+          # 6 = Disable Screen Saver
+          # 10 = Put Display to Sleep
+          # 11 = Launchpad
+          # 12 = Notification Center
+          # 13 = Lock Screen
+          # 14 = Quick Note
         wvous-tl-corner = 2;  # top-left - Mission Control
-        wvous-tr-corner = 13;  # top-right - Lock Screen
+        wvous-tr-corner = 11;  # top-right - LaunchPad
         wvous-bl-corner = 3;  # bottom-left - Application Windows
         wvous-br-corner = 4;  # bottom-right - Desktop
       };
@@ -168,7 +176,7 @@
 
       # NOTE: do NOT support remap capslock to both control and escape at the same time
       remapCapsLockToControl = false;  # remap caps lock to control, useful for emac users
-      remapCapsLockToEscape  = true;   # remap caps lock to escape, useful for vim users
+      remapCapsLockToEscape  = false;   # remap caps lock to escape, useful for vim users
 
       # swap left command and left alt 
       # so it matches common keyboard layout: `ctrl | command | alt`
