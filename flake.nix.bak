@@ -1,0 +1,134 @@
+{
+  description = "thinkstudio system flake";
+
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nix-darwin.url = "github:LnL7/nix-darwin";
+    nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
+  };
+
+  outputs = inputs@{ self, nix-darwin, nixpkgs }:
+  let
+
+    
+    configuration = { pkgs, ... }: {
+    system.defaults.dock.autohide = true;
+    system.defaults.dock.mru-spaces = false;
+    system.defaults.dock.orientation = "right";
+    system.defaults.dock.showhidden = true;
+
+    system.defaults.finder.AppleShowAllExtensions = true;
+    system.defaults.finder.QuitMenuItem = true;
+    system.defaults.finder.FXEnableExtensionChangeWarning = false;
+
+    system.defaults.trackpad.Clicking = true;
+    system.defaults.trackpad.TrackpadThreeFingerDrag = true;
+
+    system.keyboard.enableKeyMapping = true;
+    system.keyboard.remapCapsLockToControl = true;
+      # List packages installed in system profile. To search by name, run:
+      # $ nix-env -qaP | grep wget
+    nixpkgs.config.allowUnfree = true;
+    environment.systemPackages =
+        [
+          pkgs.awscli
+          pkgs.brotli
+          pkgs.ctags
+          pkgs.curl
+          pkgs.direnv
+          pkgs.entr
+          pkgs.fzf
+          pkgs.bat
+          pkgs.bottom
+          pkgs.eza
+          pkgs.gettext
+          pkgs.git
+          pkgs.gnupg
+          pkgs.htop
+          pkgs.jq
+          pkgs.mosh
+          pkgs.ripgrep
+          pkgs.shellcheck
+          pkgs.fira-code
+          pkgs.fira-code-symbols
+          pkgs.fira-code-nerdfont
+          pkgs._1password-gui
+          pkgs._1password
+          pkgs.podman
+          pkgs.docker
+          pkgs.vscode
+          pkgs.kitty
+          pkgs.qes
+          pkgs.zsh-completions
+        ];
+
+      services.yabai.enable = true;
+      services.yabai.package = pkgs.yabai;
+      services.skhd.enable = true;
+
+      # Auto upgrade nix package and the daemon service.
+      services.nix-daemon.enable = true;
+      # nix.package = pkgs.nix;
+
+      # Necessary for using flakes on this system.
+      nix.settings.experimental-features = "nix-command flakes";
+  
+      programs.gnupg.agent.enable = true;
+      programs.gnupg.agent.enableSSHSupport = true;
+
+      programs.tmux.enable = true;
+      programs.tmux.enableSensible = true;
+      programs.tmux.enableMouse = true;
+      programs.tmux.enableFzf = true;
+      programs.tmux.enableVim = true;
+
+      programs.zsh.enable = true;
+      programs.zsh.enableBashCompletion = true;
+      programs.zsh.enableFzfCompletion = true;
+      programs.zsh.enableFzfGit = true;
+      programs.zsh.enableFzfHistory = true;
+
+      programs.zsh.variables.cfg = "$HOME/.config/nixpkgs/darwin/configuration.nix";
+      programs.zsh.variables.darwin = "$HOME/.nix-defexpr/darwin";
+      programs.zsh.variables.nixpkgs = "$HOME/.nix-defexpr/nixpkgs";
+      # Set Git commit hash for darwin-version.
+      system.configurationRevision = self.rev or self.dirtyRev or null;
+
+      environment.loginShell = "${pkgs.zsh}/bin/zsh -l";
+      environment.variables.SHELL = "${pkgs.zsh}/bin/zsh";
+
+      environment.variables.LANG = "en_US.UTF-8";
+
+      environment.shellAliases.g = "git log --pretty=color -32";
+      environment.shellAliases.gb = "git branch";
+      environment.shellAliases.gc = "git checkout";
+      environment.shellAliases.gcb = "git checkout -B";
+      environment.shellAliases.gd = "git diff --minimal --patch";
+      environment.shellAliases.gf = "git fetch";
+      environment.shellAliases.ga = "git log --pretty=color --all";
+      environment.shellAliases.gg = "git log --pretty=color --graph";
+      environment.shellAliases.gl = "git log --pretty=nocolor";
+      environment.shellAliases.cat = "git reset --hard";
+      environment.shellAliases.ls = "exa";
+      environment.shellAliases.top = "btm";
+      environment.shellAliases.htop = "btm";
+
+      # Used for backwards compatibility, please read the changelog before changing.
+      # $ darwin-rebuild changelog
+      system.stateVersion = 4;
+
+      # The platform the configuration will be used on.
+      nixpkgs.hostPlatform = "aarch64-darwin";
+    };
+  in
+  {
+    # Build darwin flake using:
+    # $ darwin-rebuild build --flake .#thinkstudio
+    darwinConfigurations."thinkstudio" = nix-darwin.lib.darwinSystem {
+      modules = [ configuration ];
+    };
+
+    # Expose the package set, including overlays, for convenience.
+    darwinPackages = self.darwinConfigurations."thinkstudio".pkgs;
+  };
+}
