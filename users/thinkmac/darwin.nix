@@ -1,9 +1,9 @@
 { inputs, pkgs, ... }:
 
 {
-  # nixpkgs.overlays = import ../../lib/overlays.nix ++ [
-  #   (import ./vim.nix { inherit inputs; })
-  # ];
+  nixpkgs.overlays = import ../../lib/overlays.nix ++ [
+    (import ./vim.nix { inherit inputs; })
+  ];
 
   homebrew = {
     enable = true;
@@ -25,23 +25,10 @@
 
   # The user should already exist, but we need to set this up so Nix knows
   # what our home directory is (https://github.com/LnL7/nix-darwin/issues/423).
-  users.users.thinkstudio = {
-    home = "/Users/thinkstudio";
+  users.users.thinkmac = {
+    home = "/Users/thinkmac";
     shell = pkgs.fish;
   };
-
-  ###################################################################################
-  #
-  #  macOS's System configuration
-  #
-  #  All the configuration options are documented here:
-  #    https://daiderd.com/nix-darwin/manual/index.html#sec-options
-  #  and see the source code of this project to get more undocumented options:
-  #    https://github.com/rgcr/m-cli
-  #
-  ###################################################################################
-
-
   system = {
     # activationScripts are executed every time you boot the system or run `nixos-rebuild` / `darwin-rebuild`.
     activationScripts.postUserActivation.text = ''
@@ -51,26 +38,16 @@
     '';
 
     defaults = {
-      menuExtraClock.Show24Hour = true;  # show 24 hour clock
+      # menuExtraClock.Show24Hour = true;  # show 24 hour clock
+      
       # customize dock
       dock = {
         autohide = true;
         show-recents = false;  # disable recent apps
 
         # customize Hot Corners
-          # 1 = -
-          # 2 = Mission Control
-          # 3 = Application Windows
-          # 4 = Desktop
-          # 5 = Start Screen Saver
-          # 6 = Disable Screen Saver
-          # 10 = Put Display to Sleep
-          # 11 = Launchpad
-          # 12 = Notification Center
-          # 13 = Lock Screen
-          # 14 = Quick Note
         wvous-tl-corner = 2;  # top-left - Mission Control
-        wvous-tr-corner = 11;  # top-right - LaunchPad
+        wvous-tr-corner = 11;  # top-right - 
         wvous-bl-corner = 3;  # bottom-left - Application Windows
         wvous-br-corner = 4;  # bottom-right - Desktop
       };
@@ -87,6 +64,7 @@
 
       # customize trackpad
       trackpad = {
+        # tap - , click - 
         Clicking = true;  # enable tap to click
         TrackpadRightClick = true;  # enable two finger right click
         TrackpadThreeFingerDrag = true;  # enable three finger drag
@@ -184,9 +162,10 @@
       # disabled, caused only problems!
       swapLeftCommandAndLeftAlt = false;  
     };
-  };
+  
 
   # Add ability to used TouchID for sudo authentication
+  };
   security.pam.enableSudoTouchIdAuth = true;
 
   # Create /etc/zshrc that loads the nix-darwin environment.
@@ -223,6 +202,7 @@
           "NerdFontsSymbolsOnly"
           # Characters
           "FiraCode"
+          "Iosevka"
         ];
       })
     ];

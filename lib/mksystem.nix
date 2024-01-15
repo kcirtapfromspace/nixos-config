@@ -18,10 +18,7 @@ let
   machineConfig = ../machines/${name}.nix;
   userOSConfig = ../users/${user}/${if darwin then "darwin" else "nixos" }.nix;
   userHMConfig = ../users/${user}/home-manager.nix;
-  # appsConfig = ../users/${user}/${if darwin then "apps" else "nixos" }.nix;
 
-  # NixOS vs nix-darwin functionst
-  # darwinPackages =  if darwin then inputs.darwin.lib.darwinConfigurations.${user}.pkg else {};
   systemFunc = if darwin then inputs.darwin.lib.darwinSystem else nixpkgs.lib.nixosSystem;
   home-manager = if darwin then inputs.home-manager.darwinModules else inputs.home-manager.nixosModules;
 in systemFunc rec {
@@ -45,6 +42,7 @@ in systemFunc rec {
       home-manager.users.${user} = import userHMConfig {
         isWSL = isWSL;
         inputs = inputs;
+        systemType = system;
       };
     }
 

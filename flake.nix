@@ -20,58 +20,61 @@
       url = "github:LnL7/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
-
     # Other packages
+    nixneovim.url = "github:nixneovim/nixneovim";
     zig.url = "github:mitchellh/zig-overlay";
-
+    # https://github.com/NixNeovim/NixNeovim
     # Non-flakes
-    nvim-treesitter.url = "github:nvim-treesitter/nvim-treesitter/v0.9.1";
+
+    fish-foreign-env.flake = false;
+    fish-foreign-env.url = "github:oh-my-fish/plugin-foreign-env";
+    fish-fzf.flake = false;
+    fish-fzf.url = "github:jethrokuan/fzf";
     nvim-treesitter.flake = false;
-    vim-copilot.url = "github:github/copilot.vim/v1.11.1";
+    nvim-treesitter.url = "github:nvim-treesitter/nvim-treesitter/v0.9.1";
+    theme-bobthefish.flake = false;
+    theme-bobthefish.url = "github:oh-my-fish/theme-bobthefish";
+    tmux-dracula.flake = false;
+    tmux-dracula.url = "github:dracula/tmux";
+    tmux-pain-control.flake = false;
+    tmux-pain-control.url = "github:tmux-plugins/tmux-pain-control";
+    tree-sitter-proto.flake = false; 
+    tree-sitter-proto.url = "github:mitchellh/tree-sitter-proto"; 
     vim-copilot.flake = false;
+    vim-copilot.url = "github:github/copilot.vim/v1.11.1";
   };
 
   outputs = { self, nixpkgs, home-manager, darwin, ... }@inputs: let
     # Overlays is the list of overlays we want to apply from flake inputs.
     overlays = [
-      # inputs.zig.overlays.default
+      inputs.zig.overlays.default
     ];
 
     mkSystem = import ./lib/mksystem.nix {
       inherit overlays nixpkgs inputs;
     };
   in {
-    # nixosConfigurations.vm-aarch64 = mkSystem "vm-aarch64" {
-    #   system = "aarch64-linux";
-    #   user   = "kcirtap";
-    # };
+    nixosConfigurations.vm-aarch64-utm = mkSystem "vm-aarch64-utm" rec {
+      system = "aarch64-linux";
+      user   = "kcirtap";
+    };
 
-    # nixosConfigurations.vm-aarch64-prl = mkSystem "vm-aarch64-prl" rec {
-    #   system = "aarch64-linux";
-    #   user   = "kcirtap";
-    # };
+    nixosConfigurations.vm-intel = mkSystem "vm-intel" rec {
+      system = "x86_64-linux";
+      user   = "kcirtap";
+    };
 
-    # nixosConfigurations.vm-aarch64-utm = mkSystem "vm-aarch64-utm" rec {
-    #   system = "aarch64-linux";
-    #   user   = "kcirtap";
-    # };
+    nixosConfigurations.wsl = mkSystem "wsl" {
+      system = "x86_64-linux";
+      user   = "kcirtap";
+      wsl    = true;
+    };
 
-    # nixosConfigurations.vm-intel = mkSystem "vm-intel" rec {
-    #   system = "x86_64-linux";
-    #   user   = "kcirtap";
-    # };
-
-    # nixosConfigurations.wsl = mkSystem "wsl" {
-    #   system = "x86_64-linux";
-    #   user   = "kcirtap";
-    #   wsl    = true;
-    # };
-
-    # darwinConfigurations.macbook-pro-m1 = mkSystem "macbook-pro-m1" {
-    #   system = "aarch64-darwin";
-    #   user   = "thinkmac";
-    #   darwin = true;
-    # };
+    darwinConfigurations.macbook-pro-m1 = mkSystem "macbook-pro-m1" {
+      system = "aarch64-darwin";
+      user   = "thinkmac";
+      darwin = true;
+    };
 
     darwinConfigurations.thinkstudio = mkSystem "mac-studio-m1" {
       system = "aarch64-darwin";

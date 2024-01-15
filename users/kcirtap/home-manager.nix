@@ -1,10 +1,18 @@
-{ isWSL, inputs, ... }:
+
+{ isWSL, inputs, systemType,... }:
 
 { config, lib, pkgs, ... }:
+
 
 let
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
+
+  imports = [
+      nixneovim.nixosModules.default # with Home Manager unstable
+      # nixneovim.nixosModules.homeManager-22-11 # with Home Manager 22.11
+      # nixneovim.nixosModules.nixos # without Home Manager
+  ];
 
   # For our MANPAGER env var
   # https://github.com/sharkdp/bat/issues/1145
@@ -16,8 +24,8 @@ let
 in {
   # Home-manager 22.11 requires this be set. We never set it so we have
   # to use the old state version.
-  home.stateVersion = "18.09";
-
+  home.stateVersion = "23.11";
+  
   xdg.enable = true;
 
   #---------------------------------------------------------------------
@@ -27,18 +35,50 @@ in {
   # Packages I always want installed. Most packages I install using
   # per-project flakes sourced with direnv and nix-shell, so this is
   # not a huge list.
-  home.packages = [
+
+  home.packages = with pkgs; [
+  # Common packages here
+  # x86_64 specific packages
+  ] ++ lib.optionals (systemType == "x86_64-linux") [
+  # aarch64 specific packages
+  ] ++ lib.optionals (systemType == "aarch64-linux") [
+  ] ++ lib.optionals (systemType == "aarch64-darwin") [
+    pkgs._1password
+    pkgs._1password-gui
     pkgs.asciinema
+    pkgs.awscli
     pkgs.bat
+    pkgs.bottom
+    pkgs.brotli
+    pkgs.ctags
+    pkgs.curl
+    pkgs.direnv
+    pkgs.direnv
+    pkgs.docker
+    pkgs.entr
+    pkgs.eza
     pkgs.fd
+    pkgs.fira-code
+    pkgs.fira-code-nerdfont
+    pkgs.fira-code-symbols
     pkgs.fzf
+    pkgs.gettext
     pkgs.gh
+    pkgs.gnupg
+    pkgs.gopls
     pkgs.htop
     pkgs.jq
+    pkgs.kitty
+    pkgs.mosh
+    pkgs.podman
+    pkgs.qes
     pkgs.ripgrep
+    pkgs.ripgrep
+    pkgs.shellcheck
     pkgs.tree
+    pkgs.vscode
     pkgs.watch
-    pkgs.gopls
+    pkgs.zsh-completions
     # pkgs.zigpkgs.master
 
     # Node is required for Copilot.vim
@@ -47,6 +87,7 @@ in {
     # This is automatically setup on Linux
     pkgs.cachix
     pkgs.tailscale
+
   ]) ++ (lib.optionals (isLinux && !isWSL) [
     pkgs.chromium
     pkgs.firefox
@@ -73,16 +114,11 @@ in {
   home.file.".inputrc".source = ./inputrc;
 
   xdg.configFile = {
-    # "i3/config".text = builtins.readFile ./i3;
-    # "rofi/config.rasi".text = builtins.readFile ./rofi;
-    # tree-sitter parsers
-    # "nvim/parser/proto.so".source = "${pkgs.tree-sitter-proto}/parser";
-    # "nvim/queries/proto/folds.scm".source =
-    #   "${sources.tree-sitter-proto}/queries/folds.scm";
-    # "nvim/queries/proto/highlights.scm".source =
-    #   "${sources.tree-sitter-proto}/queries/highlights.scm";
-    # "nvim/queries/proto/textobjects.scm".source =
-    #   ./textobjects.scm;
+    "i3/config".text = builtins.readFile ./i3;
+    "rofi/config.rasi".text = builtins.readFile ./rofi;
+
+    "nvim/queries/proto/textobjects.scm".source =
+      ./textobjects.scm;
   } // (if isDarwin then {
     # Rectangle.app. This has to be imported manually using the app.
     "rectangle/RectangleConfig.json".text = builtins.readFile ./RectangleConfig.json;
@@ -121,6 +157,7 @@ in {
     config = {
       whitelist = {
         prefix= [
+          "$HOME/code/go/src/github.com/hashicorp"
           "$HOME/code/go/src/github.com/kcirtapfromspace"
         ];
 
@@ -129,10 +166,47 @@ in {
     };
   };
 
+  programs.fish = {
+    enable = true;
+    interactiveShellInit = lib.strings.concatStrings (lib.strings.intersperse "\n" ([
+      # "source ${inputs.theme-bobthefish.packages.${systemType}.theme-bobthefish}/functions/fish_prompt.fish"
+      # "source ${inputs.theme-bobthefish.packages.${systemType}.theme-bobthefish}/functions/fish_right_prompt.fish"
+      # "source ${inputs.theme-bobthefish.packages.${systemType}.theme-bobthefish}/functions/fish_title.fish"
+      (builtins.readFile ./config.fish)
+      "set -g SHELL ${pkgs.fish}/bin/fish"
+    ]));
+
+    shellAliases = {
+      ga = "git add";
+      gc = "git commit";
+      gco = "git checkout";
+      gcp = "git cherry-pick";
+      gdiff = "git diff";
+      gl = "git prettylog";
+      gp = "git push";
+      gs = "git status";
+      gt = "git tag";
+    } // (if isLinux then {
+      # Two decades of using a Mac has made this such a strong memory
+      # that I'm just going to keep it consistent.
+      pbcopy = "xclip";
+      pbpaste = "xclip -o";
+    } else {});
+
+  #   plugins = map (n: {
+  #     name = n;
+  #     src = inputs.${n}.packages.${systemType}.${n};
+  #     }) [
+  #     "fish-fzf"
+  #     "fish-foreign-env"
+  #     "theme-bobthefish"
+  #   ];
+  };
+
   programs.git = {
     enable = true;
     userName = "Patrick Deutsch";
-    userEmail = "patrick.deutsch@gmail.com";
+    userEmail = "105461352+kcirtapfromspace@users.noreply.github.com";
     signing = {
       key = "523D5DC389D273BC";
       signByDefault = true;
@@ -156,67 +230,69 @@ in {
   programs.go = {
     enable = true;
     goPath = "code/go";
-    goPrivate = [ "github.com/kcirtapfromspace" "rfc822.mx" ];
+    goPrivate = [ "github.com/kcirtapfromspace" "github.com/hashicorp" "rfc822.mx" ];
+  };
+#TODO: fix this tmux extra config
+    # run-shell ${inputs.tmux-pain-control.packages.${systemType}.tmux-pain-control}/pain_control.tmux
+    # run-shell ${inputs.tmux-dracula.packages.${systemType}.tmux-dracula}/dracula.tmux
+  programs.tmux = {
+    enable = true;
+    terminal = "xterm-256color";
+    shortcut = "l";
+    secureSocket = false;
+
+    extraConfig = ''
+      set -ga terminal-overrides ",*256col*:Tc"
+
+      set -g @dracula-show-battery false
+      set -g @dracula-show-network false
+      set -g @dracula-show-weather false
+
+      bind -n C-k send-keys "clear"\; send-keys "Enter"
+
+
+    '';
   };
 
-  # programs.tmux = {
-  #   enable = true;
-  #   terminal = "xterm-256color";
-  #   shortcut = "l";
-  #   secureSocket = false;
+  programs.alacritty = {
+    enable = !isWSL;
 
-  #   extraConfig = ''
-  #     set -ga terminal-overrides ",*256col*:Tc"
+    settings = {
+      env.TERM = "xterm-256color";
 
-  #     set -g @dracula-show-battery false
-  #     set -g @dracula-show-network false
-  #     set -g @dracula-show-weather false
-
-  #     bind -n C-k send-keys "clear"\; send-keys "Enter"
-
-  #     run-shell ${sources.tmux-pain-control}/pain_control.tmux
-  #     run-shell ${sources.tmux-dracula}/dracula.tmux
-  #   '';
-  # };
-
+      key_bindings = [
+        { key = "K"; mods = "Command"; chars = "ClearHistory"; }
+        { key = "V"; mods = "Command"; action = "Paste"; }
+        { key = "C"; mods = "Command"; action = "Copy"; }
+        { key = "Key0"; mods = "Command"; action = "ResetFontSize"; }
+        { key = "Equals"; mods = "Command"; action = "IncreaseFontSize"; }
+        { key = "Subtract"; mods = "Command"; action = "DecreaseFontSize"; }
+      ];
+    };
+  };
 
   programs.kitty = {
     enable = !isWSL;
     extraConfig = builtins.readFile ./kitty;
   };
 
+  programs.i3status = {
+    enable = isLinux && !isWSL;
 
-  programs.neovim = {
-    enable = true;
-    withPython3 = true; 
+    general = {
+      colors = true;
+      color_good = "#8C9440";
+      color_bad = "#A54242";
+      color_degraded = "#DE935F";
+    };
 
-    # extraConfig = (import ./vim-config.nix) { inherit sources; };
-  };
-
-  programs.starship = {
-    enable = true;
-
-    enableBashIntegration = true;
-    enableZshIntegration = true;
-    enableNushellIntegration = true;
-
-    settings = {
-      character = {
-        success_symbol = "[›](bold green)";
-        error_symbol = "[›](bold red)";
-      };
-      aws = {
-        symbol = "🅰 ";
-      };
-      gcloud = {
-        # do not show the account/project's info
-        # to avoid the leak of sensitive information when sharing the terminal
-        format = "on [$symbol$active(\($region\))]($style) ";
-        symbol = "🅶 ️";
-      };
+    modules = {
+      ipv6.enable = false;
+      "wireless _first_".enable = false;
+      "battery all".enable = false;
     };
   };
-  
+
   services.gpg-agent = {
     enable = isLinux;
     pinentryFlavor = "tty";
@@ -225,6 +301,8 @@ in {
     defaultCacheTtl = 31536000;
     maxCacheTtl = 31536000;
   };
+
+  xresources.extraConfig = builtins.readFile ./Xresources;
 
   # Make cursor not tiny on HiDPI screens
   home.pointerCursor = lib.mkIf (isLinux && !isWSL) {
