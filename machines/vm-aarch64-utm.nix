@@ -1,7 +1,7 @@
 { config, pkgs, modulesPath, ... }: {
   imports = [
     ./hardware/vm-aarch64-utm.nix
-    ./vm-shared.nix
+    ./vm-shared.nix    
   ];
 
   # Interface is this on my M1

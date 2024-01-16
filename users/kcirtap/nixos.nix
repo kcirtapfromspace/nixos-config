@@ -17,11 +17,11 @@
     shell = pkgs.fish;
     hashedPassword = "$1$sO7N9E9s$ou54gyjRE6gdkXQWs.i0e.";
     openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJTq7nyuweoqPKKVFAvAdrp+qH6nOo4mkDaYppvI7a4"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDGn/hKs3lZwvDjdvRHjC7YwHeHNNOpEsEh2Cp4ELwEf"
     ];
   };
 
   nixpkgs.overlays = import ../../lib/overlays.nix ++ [
-    # (import ./vim.nix { inherit inputs; })
+    # (import ./neovim.nix { inherit inputs pkgs; })
   ];
 }

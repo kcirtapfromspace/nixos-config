@@ -90,6 +90,9 @@ vm/bootstrap:
 	ssh $(SSH_OPTIONS) -p$(NIXPORT) $(NIXUSER)@$(NIXADDR) " \
 		sudo reboot; \
 	"
+vm/garbage:
+	NIXUSER=root $(MAKE) vm/gc
+	"
 
 # copy our secrets into the VM
 vm/secrets:
@@ -118,9 +121,20 @@ vm/copy:
 # have to run vm/copy before.
 vm/switch:
 	ssh $(SSH_OPTIONS) -p$(NIXPORT) $(NIXUSER)@$(NIXADDR) " \
-		sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --flake \"/nix-config#${NIXNAME}\" --show-trace\
+		sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --flake \"/nix-config#${NIXNAME}\"\
 	"
 
+# sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --flake nix-config#vm-aarch64-utm
+vm/gc:
+	ssh $(SSH_OPTIONS) -p$(NIXPORT) $(NIXUSER)@$(NIXADDR) " \
+		sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nix-store --gc \
+	"
+
+vm:
+	$(MAKE) vm/gc
+	$(MAKE) vm/copy
+	$(MAKE) vm/switch
+	
 # Build a WSL installer
 .PHONY: wsl
 wsl:

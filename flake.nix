@@ -21,9 +21,9 @@
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
     # Other packages
-    nixneovim.url = "github:nixneovim/nixneovim";
-    zig.url = "github:mitchellh/zig-overlay";
+    # nixneovim.url = "github:nixneovim/nixneovim";
     # https://github.com/NixNeovim/NixNeovim
+    zig.url = "github:mitchellh/zig-overlay";
     # Non-flakes
 
     fish-foreign-env.flake = false;
@@ -48,6 +48,7 @@
     # Overlays is the list of overlays we want to apply from flake inputs.
     overlays = [
       inputs.zig.overlays.default
+      # inputs.nixneovim.overlays.default
     ];
 
     mkSystem = import ./lib/mksystem.nix {

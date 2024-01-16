@@ -8,11 +8,6 @@ let
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
 
-  imports = [
-      nixneovim.nixosModules.default # with Home Manager unstable
-      # nixneovim.nixosModules.homeManager-22-11 # with Home Manager 22.11
-      # nixneovim.nixosModules.nixos # without Home Manager
-  ];
 
   # For our MANPAGER env var
   # https://github.com/sharkdp/bat/issues/1145
@@ -25,7 +20,18 @@ in {
   # Home-manager 22.11 requires this be set. We never set it so we have
   # to use the old state version.
   home.stateVersion = "23.11";
-  
+  imports = [
+    ./neovim.nix
+    # ./starship.nix
+    # ./terminal.nix
+    # ./git.nix
+    # ./direnv.nix
+    # ./zellij.nix
+    # ./nushell.nix
+    # ./just.nix
+    # ./powershell.nix
+  ];
+
   xdg.enable = true;
 
   #---------------------------------------------------------------------
@@ -53,7 +59,6 @@ in {
     pkgs.ctags
     pkgs.curl
     pkgs.direnv
-    pkgs.direnv
     pkgs.docker
     pkgs.entr
     pkgs.eza
@@ -73,12 +78,10 @@ in {
     pkgs.podman
     pkgs.qes
     pkgs.ripgrep
-    pkgs.ripgrep
     pkgs.shellcheck
     pkgs.tree
-    pkgs.vscode
     pkgs.watch
-    pkgs.zsh-completions
+
     # pkgs.zigpkgs.master
 
     # Node is required for Copilot.vim
@@ -87,6 +90,7 @@ in {
     # This is automatically setup on Linux
     pkgs.cachix
     pkgs.tailscale
+    pkgs.vscode
 
   ]) ++ (lib.optionals (isLinux && !isWSL) [
     pkgs.chromium
@@ -157,7 +161,6 @@ in {
     config = {
       whitelist = {
         prefix= [
-          "$HOME/code/go/src/github.com/hashicorp"
           "$HOME/code/go/src/github.com/kcirtapfromspace"
         ];
 
@@ -205,10 +208,14 @@ in {
 
   programs.git = {
     enable = true;
+    signByDefault = true;
     userName = "Patrick Deutsch";
     userEmail = "105461352+kcirtapfromspace@users.noreply.github.com";
     signing = {
-      key = "523D5DC389D273BC";
+      key = "";      
+      # The default GPG signing key fingerprint.
+          # Set to `null` to let GnuPG decide what signing key
+          # to use depending on commit’s author."
       signByDefault = true;
     };
     aliases = {
@@ -232,6 +239,7 @@ in {
     goPath = "code/go";
     goPrivate = [ "github.com/kcirtapfromspace" "github.com/hashicorp" "rfc822.mx" ];
   };
+  
 #TODO: fix this tmux extra config
     # run-shell ${inputs.tmux-pain-control.packages.${systemType}.tmux-pain-control}/pain_control.tmux
     # run-shell ${inputs.tmux-dracula.packages.${systemType}.tmux-dracula}/dracula.tmux
