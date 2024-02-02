@@ -8,6 +8,7 @@
   homebrew = {
     enable = true;
     casks  = [
+      # "keybase"
       "1password"
       "cleanshot"
       "discord"
@@ -38,7 +39,7 @@
     '';
 
     defaults = {
-      # menuExtraClock.Show24Hour = true;  # show 24 hour clock
+      menuExtraClock.Show24Hour = true;  # show 24 hour clock
       
       # customize dock
       dock = {
@@ -60,6 +61,7 @@
         QuitMenuItem = true;  # enable quit menu item
         ShowPathbar = true;  # show path bar
         ShowStatusBar = true;  # show status bar
+        CreateDesktop = false; # hide desktop
       };
 
       # customize trackpad
@@ -111,9 +113,9 @@
           WebKitDeveloperExtras = true;
         };
         "com.apple.finder" = {
-          ShowExternalHardDrivesOnDesktop = true;
-          ShowHardDrivesOnDesktop = true;
-          ShowMountedServersOnDesktop = true;
+          ShowExternalHardDrivesOnDesktop = false;
+          ShowHardDrivesOnDesktop = false;
+          ShowMountedServersOnDesktop = false;
           ShowRemovableMediaOnDesktop = true;
           _FXSortFoldersFirst = true;
           # When performing a search, search the current folder by default
@@ -167,7 +169,6 @@
   # Add ability to used TouchID for sudo authentication
   };
   security.pam.enableSudoTouchIdAuth = true;
-
   # Create /etc/zshrc that loads the nix-darwin environment.
   # this is required if you want to use darwin's default shell - zsh
   programs.zsh.enable = true;

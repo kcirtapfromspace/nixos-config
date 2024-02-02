@@ -1,5 +1,5 @@
 # Connectivity info for Linux VM
-NIXADDR ?= 192.168.64.4
+NIXADDR ?= 192.168.72.2
 NIXPORT ?= 22
 NIXUSER ?= kcirtap
 
@@ -7,6 +7,7 @@ NIXUSER ?= kcirtap
 MAKEFILE_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
 # The name of the nixosConfiguration in the flake
+# NIXNAME ?= mac-studio-m1
 NIXNAME ?= vm-aarch64-utm
 
 # The block device prefix to use.
@@ -41,7 +42,7 @@ endif
 # cache. This does not alter the current running system. This requires
 # cachix authentication to be configured out of band.
 cache:
-	nix build '.#nixosConfigurations.$(NIXNAME).config.system.build.toplevel' --json \
+	NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nix build '.#nixosConfigurations.$(NIXNAME).config.system.build.toplevel' --json \
 		| jq -r '.[].outputs | to_entries[].value' \
 		| cachix push kcirtapfromspace-nixos-config
 

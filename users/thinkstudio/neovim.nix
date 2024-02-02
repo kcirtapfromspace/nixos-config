@@ -1,22 +1,20 @@
 { pkgs, ... }:
 {
   imports = [
-    ./neovim/coc.nix
-    ./neovim/rust.nix
-    ./neovim/telescope.nix
+    # ./neovim/telescope.nix
+    # ./neovim/coc.nix
+    # ./neovim/haskell.nix
+    # ./neovim/rust.nix
     # ./neovim/zk.nix
     # which-key must be the last import for it to recognize the keybindings of
     # previous imports.
-    ./neovim/which-key.nix
+    # ./neovim/which-key.nix
   ];
   programs.neovim = {
     enable = true;
-    defaultEditor = true;
-    vimAlias = true;
-    viAlias = true;
+
     extraPackages = [
       pkgs.lazygit
-      pkgs.ripgrep
     ];
 
     # Full list here,

@@ -12,8 +12,8 @@
     '';
     settings = {
       auto-optimise-store = false;
-      substituters = ["https://cache.nixos.org" "https://cache.nixos.org/" "https://kcirtapfromspace-nixos-config.cachix.org"];
-      trusted-public-keys = ["cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" "kcirtapfromspace-nixos-config.cachix.org-1:WvCbexA5U/18jpd+S1Xdl83HIRkibSQJdSUXWfQpz00="];
+      substituters = ["https://kcirtapfromspace-nixos-config.cachix.org"];
+      trusted-public-keys = ["kcirtapfromspace-nixos-config.cachix.org-1:WvCbexA5U/18jpd+S1Xdl83HIRkibSQJdSUXWfQpz00="];
     };
   };
   # Allow unfree packages

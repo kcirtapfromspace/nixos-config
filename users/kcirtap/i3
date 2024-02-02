@@ -49,14 +49,15 @@ exec --no-startup-id xsetroot -solid $back
 floating_modifier $mod
 
 bindsym $mod+o exec rofi -show run
-
+#start a browser
+bindsym $mod+F exec firefox
 # start a terminal
 bindsym $mod+n exec kitty
 bindsym $mod+d split h
 bindsym $mod+Shift+d split v
 
 # temp, hacking on a tty
-bindsym $mod+Shift+n exec /home/mitchellh/bin/devtty --config-file=/home/mitchellh/.config/devtty/config
+bindsym $mod+Shift+n exec /home/kcirtap/bin/devtty --config-file=/home/kcirtap/.config/devtty/config
 
 # kill focused window
 bindsym $mod+w kill

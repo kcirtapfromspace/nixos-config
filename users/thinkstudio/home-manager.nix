@@ -5,11 +5,9 @@
 
 
 let
-
-  _ = builtins.trace "Current system type is: ${systemType}";
-
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
+
 
   # For our MANPAGER env var
   # https://github.com/sharkdp/bat/issues/1145
@@ -22,7 +20,18 @@ in {
   # Home-manager 22.11 requires this be set. We never set it so we have
   # to use the old state version.
   home.stateVersion = "23.11";
-  
+  imports = [
+    # ./neovim.nix
+    # ./starship.nix
+    # ./terminal.nix
+    # ./git.nix
+    # ./direnv.nix
+    # ./zellij.nix
+    # ./nushell.nix
+    # ./just.nix
+    # ./powershell.nix
+  ];
+
   xdg.enable = true;
 
   #---------------------------------------------------------------------
@@ -76,6 +85,7 @@ in {
     pkgs.vscode
     pkgs.watch
     pkgs.zsh-completions
+    pkgs.keybase
     # pkgs.zigpkgs.master
 
     # Node is required for Copilot.vim
@@ -113,13 +123,6 @@ in {
   xdg.configFile = {
     "i3/config".text = builtins.readFile ./i3;
     "rofi/config.rasi".text = builtins.readFile ./rofi;
-
-    # tree-sitter parsers
-    # "nvim/parser/proto.so".source = "${pkgs.tree-sitter-proto}/parser";
-    # "nvim/queries/proto/folds.scm".source =
-    #   "${inputs.tree-sitter-proto.packages.${systemType}.tree-sitter-proto}/queries/folds.scm";
-    # "nvim/queries/proto/highlights.scm".source = 
-    #   "${inputs.tree-sitter-proto.packages.${systemType}.tree-sitter-proto}/queries/highlights.scm";
 
     "nvim/queries/proto/textobjects.scm".source =
       ./textobjects.scm;
@@ -210,7 +213,7 @@ in {
   programs.git = {
     enable = true;
     userName = "Patrick Deutsch";
-    userEmail = "patrick.deutsch@gmail.com";
+    userEmail = "105461352+kcirtapfromspace@users.noreply.github.com";
     signing = {
       key = "523D5DC389D273BC";
       signByDefault = true;
@@ -236,6 +239,7 @@ in {
     goPath = "code/go";
     goPrivate = [ "github.com/kcirtapfromspace" "github.com/hashicorp" "rfc822.mx" ];
   };
+  
 #TODO: fix this tmux extra config
     # run-shell ${inputs.tmux-pain-control.packages.${systemType}.tmux-pain-control}/pain_control.tmux
     # run-shell ${inputs.tmux-dracula.packages.${systemType}.tmux-dracula}/dracula.tmux
@@ -295,55 +299,6 @@ in {
       "wireless _first_".enable = false;
       "battery all".enable = false;
     };
-  };
-
-  programs.neovim = {
-    enable = true;
-    # package = pkgs.neovim-nightly;
-
-    withPython3 = true;
-
-    # plugins = with pkgs; [
-    #   customVim.vim-copilot
-    #   customVim.vim-cue
-    #   customVim.vim-fish
-    #   customVim.vim-fugitive
-    #   customVim.vim-glsl
-    #   customVim.vim-misc
-    #   customVim.vim-pgsql
-    #   customVim.vim-tla
-    #   customVim.vim-zig
-    #   customVim.pigeon
-    #   customVim.AfterColors
-
-    #   customVim.vim-nord
-    #   customVim.nvim-comment
-    #   customVim.nvim-lspconfig
-    #   customVim.nvim-plenary # required for telescope
-    #   customVim.nvim-telescope
-    #   customVim.nvim-treesitter
-    #   customVim.nvim-treesitter-playground
-    #   customVim.nvim-treesitter-textobjects
-
-    #   vimPlugins.vim-airline
-    #   vimPlugins.vim-airline-themes
-    #   vimPlugins.vim-eunuch
-    #   vimPlugins.vim-gitgutter
-
-    #   vimPlugins.vim-markdown
-    #   vimPlugins.vim-nix
-    #   vimPlugins.typescript-vim
-    #   vimPlugins.nvim-treesitter-parsers.elixir
-    # ] ++ (lib.optionals (!isWSL) [
-    #   # This is causing a segfaulting while building our installer
-    #   # for WSL so just disable it for now. This is a pretty
-    #   # unimportant plugin anyway.
-    #   customVim.vim-devicons
-    # ]);
-
-    # extraConfig = (import ./vim-config.nix) {
-      # inherit inputs systemType;
-    # };
   };
 
   services.gpg-agent = {

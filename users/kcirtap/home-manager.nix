@@ -82,6 +82,7 @@ in {
     pkgs.tree
     pkgs.watch
 
+
     # pkgs.zigpkgs.master
 
     # Node is required for Copilot.vim
@@ -99,6 +100,7 @@ in {
     pkgs.valgrind
     pkgs.zathura
     pkgs.xfce.xfce4-terminal
+    pkgs.i3
   ]);
 
   #---------------------------------------------------------------------
@@ -208,7 +210,6 @@ in {
 
   programs.git = {
     enable = true;
-    signByDefault = true;
     userName = "Patrick Deutsch";
     userEmail = "105461352+kcirtapfromspace@users.noreply.github.com";
     signing = {
@@ -243,21 +244,82 @@ in {
 #TODO: fix this tmux extra config
     # run-shell ${inputs.tmux-pain-control.packages.${systemType}.tmux-pain-control}/pain_control.tmux
     # run-shell ${inputs.tmux-dracula.packages.${systemType}.tmux-dracula}/dracula.tmux
-  programs.tmux = {
+    programs.tmux = {
     enable = true;
+    shell = "${pkgs.fish}/bin/fish";
     terminal = "xterm-256color";
+    historyLimit = 100000;
+    plugins = with pkgs;
+      [
+        # {
+        #   plugin = tmux-super-fingers;
+        #   extraConfig = "set -g @super-fingers-key f";
+        # }
+        tmuxPlugins.better-mouse-mode
+        tmuxPlugins.tmux-thumbs
+        tmuxPlugins.yank
+        tmuxPlugins.dracula
+        tmuxPlugins.pain-control
+      ];
     shortcut = "l";
     secureSocket = false;
-
     extraConfig = ''
       set -ga terminal-overrides ",*256col*:Tc"
+      set -g default-terminal "tmux-256color"
 
+      set -g prefix ^A
+      set -g base-index 1              # start indexing windows at 1 instead of 0
+      set -g detach-on-destroy off     # don't exit from tmux when closing a session
+      set -g escape-time 0             # zero-out escape time delay
+      set -g history-limit 1000000     # increase history size (from 2,000)
+      set -g renumber-windows on       # renumber all windows when any window is closed
+      set -g set-clipboard on          # use system clipboard
+      set -g status-position top       # macOS / darwin style
+      setw -g mode-keys vi
+      set -g pane-active-border-style 'fg=magenta,bg=default'
+      set -g pane-border-style 'fg=brightblack,bg=default'
       set -g @dracula-show-battery false
       set -g @dracula-show-network false
       set -g @dracula-show-weather false
 
-      bind -n C-k send-keys "clear"\; send-keys "Enter"
+      # set-option -g prefix C-a
+      # unbind-key C-b
+      # bind-key C-a send-prefix
+      set -g mouse on
 
+      # Change splits to match nvim and easier to remember
+      # Open new split at cwd of current split
+      unbind %i3
+      unbind '"'
+      bind | split-window -h -c "#{pane_current_path}"
+      bind - split-window -v -c "#{pane_current_path}"
+
+      # Use vim keybindings in copy mode
+      set-window-option -g mode-keys vi
+
+      # v in copy mode starts making selection
+      bind-key -T copy-mode-vi v send-keys -X begin-selection
+      bind-key -T copy-mode-vi C-v send-keys -X rectangle-toggle
+      bind-key -T copy-mode-vi y send-keys -X copy-selection-and-cancel
+
+      # Escape turns on copy mode
+      bind Escape copy-mode
+
+      # Easier reload of config
+      bind r source-file ~/.config/tmux/tmux.conf
+
+      set-option -g status-position top
+
+      # make Prefix p paste the buffer.
+      unbind p
+      bind p paste-buffer
+
+      # Bind Keys
+      bind-key -T prefix C-g split-window \
+        "$SHELL --login -i -c 'navi --print | head -c -1 | tmux load-buffer -b tmp - ; tmux paste-buffer -p -t {last} -b tmp -d'"
+      bind-key -T prefix C-l switch -t notes
+      bind-key -T prefix C-d switch -t dotfiles
+      bind-key e send-keys "tmux capture-pane -p -S - | nvim -c 'set buftype=nofile' +" Enter
 
     '';
   };

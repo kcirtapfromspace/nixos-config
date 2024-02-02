@@ -4,7 +4,7 @@ let
   # Turn this to true to use gnome instead of i3. This is a bit
   # of a hack, I just flip it on as I need to develop gnome stuff
   # for now.
-  linuxGnome = true;
+  linuxGnome = false;
 in {
   # Be careful updating this.
   boot.kernelPackages = pkgs.linuxPackages_latest;
@@ -22,8 +22,8 @@ in {
     # this, use your own, or toss it. Its typically safe to use a binary cache
     # since the data inside is checksummed.
     settings = {
-      substituters = ["https://cache.nixos.org" "https://kcirtapfromspace-nixos-config.cachix.org"];
-      trusted-public-keys = ["cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" "kcirtapfromspace-nixos-config.cachix.org-1:WvCbexA5U/18jpd+S1Xdl83HIRkibSQJdSUXWfQpz00="];
+      substituters = ["https://kcirtapfromspace-nixos-config.cachix.org"];
+      trusted-public-keys = ["kcirtapfromspace-nixos-config.cachix.org-1:WvCbexA5U/18jpd+S1Xdl83HIRkibSQJdSUXWfQpz00="];
     };
   };
 
@@ -95,6 +95,19 @@ in {
       sessionCommands = ''
         ${pkgs.xorg.xset}/bin/xset r rate 200 40
       '';
+    };
+    libinput = {
+      enable = true;
+
+      # disabling mouse acceleration
+      mouse = {
+        accelProfile = "flat";
+      };
+
+      # disabling touchpad acceleration
+      touchpad = {
+        accelProfile = "flat";
+      };
     };
 
     windowManager = {
