@@ -19,13 +19,8 @@
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
-  # Auto upgrade nix package and the daemon service.
-  services.nix-daemon.enable = true;
-  # Use this instead of services.nix-daemon.enable if you
-  # don't wan't the daemon service to be managed for you.
-  # nix.useDaemon = true;
-
-  nix.package = pkgs.nix;
+  # Use the nix daemon
+  nix.enable = true;
 
   programs.nix-index.enable = true;
 
@@ -58,7 +53,7 @@
     # End Nix
     '';
 
-  programs.fish.enable = false;
+  programs.fish.enable = true;
   programs.fish.shellInit = ''
     # Nix
     if test -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.fish'
@@ -66,6 +61,8 @@
     end
     # End Nix
     '';
+
+  system.stateVersion = 5;
 
   environment.shells = with pkgs; [ bashInteractive zsh fish ];
   environment.systemPackages = with pkgs; [

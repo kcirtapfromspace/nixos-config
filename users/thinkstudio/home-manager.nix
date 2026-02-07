@@ -49,8 +49,7 @@ in {
   # aarch64 specific packages
   ] ++ lib.optionals (systemType == "aarch64-linux") [
   ] ++ lib.optionals (systemType == "aarch64-darwin") [
-    pkgs._1password
-    pkgs._1password-gui
+    # _1password is marked broken on darwin in 24.11 — install via brew
     pkgs.asciinema
     pkgs.awscli
     pkgs.bat
@@ -64,8 +63,6 @@ in {
     pkgs.eza
     pkgs.fd
     pkgs.fira-code
-    pkgs.fira-code-nerdfont
-    pkgs.fira-code-symbols
     pkgs.fzf
     pkgs.gettext
     pkgs.gh
@@ -301,7 +298,7 @@ in {
 
   services.gpg-agent = {
     enable = isLinux;
-    pinentryFlavor = "tty";
+    pinentryPackage = pkgs.pinentry-tty;
 
     # cache the keys forever so we don't get asked for a password
     defaultCacheTtl = 31536000;
