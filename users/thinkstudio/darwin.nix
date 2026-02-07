@@ -5,8 +5,10 @@
     (import ./vim.nix { inherit inputs; })
   ];
 
+  # TODO: Re-enable after upgrading nix-darwin to 24.11+
+  # Old nix-darwin passes --no-lock to brew bundle, which Homebrew 5.0 removed
   homebrew = {
-    enable = true;
+    enable = false;
     casks  = [
       # "keybase"
       "1password"

@@ -59,7 +59,6 @@ in {
     pkgs.ctags
     pkgs.curl
     pkgs.direnv
-    pkgs.direnv
     pkgs.docker
     pkgs.entr
     pkgs.eza
@@ -78,7 +77,6 @@ in {
     pkgs.mosh
     pkgs.podman
     pkgs.qes
-    pkgs.ripgrep
     pkgs.ripgrep
     pkgs.shellcheck
     pkgs.tree
@@ -215,7 +213,7 @@ in {
     userName = "Patrick Deutsch";
     userEmail = "105461352+kcirtapfromspace@users.noreply.github.com";
     signing = {
-      key = "523D5DC389D273BC";
+      key = "8197C9887BE1C41B";
       signByDefault = true;
     };
     aliases = {
