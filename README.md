@@ -44,6 +44,15 @@ If you want non-interactive password auth (for scripts/CI), pass `NIXPASS`:
 make NIXNAME=disposable-rust-aarch64 NIXPASS=root vm/preflight
 ```
 
+If the target host is non-NixOS (for example Fedora), `vm` will fail by default.
+For an explicit copy-only flow (no `nixos-rebuild`), use:
+
+```bash
+make NIXNAME=disposable-rust-aarch64 NIXPASS=root VM_ALLOW_NON_NIXOS=true vm
+# or
+make NIXNAME=disposable-rust-aarch64 NIXPASS=root vm/copy-only
+```
+
 ## Create a new disposable machine
 
 ```bash

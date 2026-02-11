@@ -26,6 +26,7 @@ NIXUSER_disposable-zig-aarch64 ?= root
 
 NIXADDR ?= $(if $(NIXADDR_$(NIXNAME)),$(NIXADDR_$(NIXNAME)),$(NIXADDR_DEFAULT))
 NIXUSER ?= $(if $(NIXUSER_$(NIXNAME)),$(NIXUSER_$(NIXNAME)),$(NIXUSER_DEFAULT))
+VM_ALLOW_NON_NIXOS ?= false
 
 # The block device prefix to use.
 #   - sda for SATA/IDE
@@ -110,14 +111,14 @@ vm/bootstrap0:
 # after bootstrap0, run this to finalize. After this, do everything else
 # in the VM unless secrets change.
 vm/bootstrap:
-	NIXUSER=root $(MAKE) vm/copy
-	NIXUSER=root $(MAKE) vm/switch
-	$(MAKE) vm/secrets
+	NIXUSER=root NIXPASS='$(NIXPASS)' $(MAKE) vm/copy
+	NIXUSER=root NIXPASS='$(NIXPASS)' $(MAKE) vm/switch
+	NIXPASS='$(NIXPASS)' $(MAKE) vm/secrets
 	$(SSH_CMD) $(NIXUSER)@$(NIXADDR) " \
 		sudo reboot; \
 	"
 vm/garbage:
-	NIXUSER=root $(MAKE) vm/gc
+	NIXUSER=root NIXPASS='$(NIXPASS)' $(MAKE) vm/gc
 	"
 
 # copy our secrets into the VM
@@ -162,6 +163,7 @@ vm/vars:
 	@echo "NIXADDR=$(NIXADDR)"
 	@echo "NIXPORT=$(NIXPORT)"
 	@echo "NIXUSER=$(NIXUSER)"
+	@echo "VM_ALLOW_NON_NIXOS=$(VM_ALLOW_NON_NIXOS)"
 
 .PHONY: vm/preflight
 vm/preflight:
@@ -177,16 +179,34 @@ vm/preflight:
 				echo '       remote_os=unknown'; \
 			fi; \
 			echo '       expected: NixOS target with nixos-rebuild available'; \
+			if [ '$(VM_ALLOW_NON_NIXOS)' = 'true' ]; then \
+				echo 'WARN: VM_ALLOW_NON_NIXOS=true, allowing copy-only flow.'; \
+				exit 0; \
+			fi; \
 			exit 2; \
 		fi \
 	"
 
+.PHONY: vm/copy-only
+vm/copy-only:
+	$(MAKE) vm/vars VM_ALLOW_NON_NIXOS=true NIXPASS='$(NIXPASS)'
+	$(MAKE) vm/preflight VM_ALLOW_NON_NIXOS=true NIXPASS='$(NIXPASS)'
+	$(MAKE) vm/copy NIXPASS='$(NIXPASS)'
+	@echo "INFO: copy-only flow complete (remote is non-NixOS)."
+	@echo "INFO: skipped nix-store gc + nixos-rebuild switch."
+
 vm:
-	$(MAKE) vm/vars
-	$(MAKE) vm/preflight
-	$(MAKE) vm/gc
-	$(MAKE) vm/copy
-	$(MAKE) vm/switch
+	$(MAKE) vm/vars NIXPASS='$(NIXPASS)' VM_ALLOW_NON_NIXOS='$(VM_ALLOW_NON_NIXOS)'
+	$(MAKE) vm/preflight NIXPASS='$(NIXPASS)' VM_ALLOW_NON_NIXOS='$(VM_ALLOW_NON_NIXOS)'
+	@if [ "$(VM_ALLOW_NON_NIXOS)" = "true" ]; then \
+		$(MAKE) vm/copy NIXPASS='$(NIXPASS)'; \
+		echo "INFO: VM_ALLOW_NON_NIXOS=true -> copy-only flow complete."; \
+		echo "INFO: skipped nix-store gc + nixos-rebuild switch."; \
+	else \
+		$(MAKE) vm/gc NIXPASS='$(NIXPASS)'; \
+		$(MAKE) vm/copy NIXPASS='$(NIXPASS)'; \
+		$(MAKE) vm/switch NIXPASS='$(NIXPASS)'; \
+	fi
 	
 # Build a WSL installer
 .PHONY: wsl
