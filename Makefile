@@ -1,14 +1,31 @@
-# Connectivity info for Linux VM
-NIXADDR ?= 192.168.72.2
-NIXPORT ?= 22
-NIXUSER ?= kcirtap
-
 # Get the path to this Makefile and directory
 MAKEFILE_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
 # The name of the nixosConfiguration in the flake
 # NIXNAME ?= mac-studio-m1
 NIXNAME ?= vm-aarch64-utm
+
+# Connectivity info for Linux VM
+# You can still override these per command:
+#   make NIXNAME=... NIXADDR=... NIXUSER=... vm
+NIXADDR_DEFAULT ?= 192.168.72.2
+NIXUSER_DEFAULT ?= kcirtap
+NIXPORT ?= 22
+
+# Known machine defaults
+NIXADDR_vm-aarch64-utm ?= 192.168.72.2
+NIXUSER_vm-aarch64-utm ?= kcirtap
+
+# Disposable builders on UTM host
+NIXADDR_disposable-rust-aarch64 ?= 192.168.64.13
+NIXUSER_disposable-rust-aarch64 ?= root
+NIXADDR_disposable-python-aarch64 ?= 192.168.64.13
+NIXUSER_disposable-python-aarch64 ?= root
+NIXADDR_disposable-zig-aarch64 ?= 192.168.64.13
+NIXUSER_disposable-zig-aarch64 ?= root
+
+NIXADDR ?= $(if $(NIXADDR_$(NIXNAME)),$(NIXADDR_$(NIXNAME)),$(NIXADDR_DEFAULT))
+NIXUSER ?= $(if $(NIXUSER_$(NIXNAME)),$(NIXUSER_$(NIXNAME)),$(NIXUSER_DEFAULT))
 
 # The block device prefix to use.
 #   - sda for SATA/IDE
@@ -17,7 +34,15 @@ NIXNAME ?= vm-aarch64-utm
 NIXBLOCKDEVICE ?= vda
 # SSH options that are used. These aren't meant to be overridden but are
 # reused a lot so we just store them up here.
-SSH_OPTIONS=-o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
+SSH_OPTIONS=-o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=6 -o ConnectionAttempts=1
+SSH_BASE=ssh $(SSH_OPTIONS) -p$(NIXPORT)
+ifeq ($(strip $(NIXPASS)),)
+SSH_CMD=$(SSH_BASE)
+RSYNC_SSH=$(SSH_BASE)
+else
+SSH_CMD=sshpass -p '$(NIXPASS)' $(SSH_BASE)
+RSYNC_SSH=sshpass -p '$(NIXPASS)' $(SSH_BASE)
+endif
 
 # We need to do some OS switching below.
 UNAME := $(shell uname)
@@ -54,7 +79,7 @@ cache:
 # NOTE(kcirtapfromspace): I'm sure there is a way to do this and bootstrap all
 # in one step but when I tried to merge them I got errors. One day.
 vm/bootstrap0:
-	ssh $(SSH_OPTIONS) -p$(NIXPORT) root@$(NIXADDR) " \
+	$(SSH_CMD) root@$(NIXADDR) " \
 		parted /dev/$(NIXBLOCKDEVICE) -- mklabel gpt; \
 		parted /dev/$(NIXBLOCKDEVICE) -- mkpart primary 512MiB -8GiB; \
 		parted /dev/$(NIXBLOCKDEVICE) -- mkpart primary linux-swap -8GiB 100\%; \
@@ -88,7 +113,7 @@ vm/bootstrap:
 	NIXUSER=root $(MAKE) vm/copy
 	NIXUSER=root $(MAKE) vm/switch
 	$(MAKE) vm/secrets
-	ssh $(SSH_OPTIONS) -p$(NIXPORT) $(NIXUSER)@$(NIXADDR) " \
+	$(SSH_CMD) $(NIXUSER)@$(NIXADDR) " \
 		sudo reboot; \
 	"
 vm/garbage:
@@ -98,19 +123,19 @@ vm/garbage:
 # copy our secrets into the VM
 vm/secrets:
 	# GPG keyring
-	rsync -av -e 'ssh $(SSH_OPTIONS)' \
+	rsync -av -e "$(RSYNC_SSH)" \
 		--exclude='.#*' \
 		--exclude='S.*' \
 		--exclude='*.conf' \
 		$(HOME)/.gnupg/ $(NIXUSER)@$(NIXADDR):~/.gnupg
 	# SSH keys
-	rsync -av -e 'ssh $(SSH_OPTIONS)' \
+	rsync -av -e "$(RSYNC_SSH)" \
 		--exclude='environment' \
 		$(HOME)/.ssh/ $(NIXUSER)@$(NIXADDR):~/.ssh
 
 # copy the Nix configurations into the VM.
 vm/copy:
-	rsync -av -e 'ssh $(SSH_OPTIONS) -p$(NIXPORT)' \
+	rsync -av -e "$(RSYNC_SSH)" \
 		--exclude='vendor/' \
 		--exclude='.git/' \
 		--exclude='.git-crypt/' \
@@ -121,17 +146,44 @@ vm/copy:
 # run the nixos-rebuild switch command. This does NOT copy files so you
 # have to run vm/copy before.
 vm/switch:
-	ssh $(SSH_OPTIONS) -p$(NIXPORT) $(NIXUSER)@$(NIXADDR) " \
+	$(SSH_CMD) $(NIXUSER)@$(NIXADDR) " \
 		sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --flake \"/nix-config#${NIXNAME}\"\
 	"
 
 # sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nixos-rebuild switch --flake nix-config#vm-aarch64-utm
 vm/gc:
-	ssh $(SSH_OPTIONS) -p$(NIXPORT) $(NIXUSER)@$(NIXADDR) " \
+	$(SSH_CMD) $(NIXUSER)@$(NIXADDR) " \
 		sudo NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1 nix-store --gc \
 	"
 
+.PHONY: vm/vars
+vm/vars:
+	@echo "NIXNAME=$(NIXNAME)"
+	@echo "NIXADDR=$(NIXADDR)"
+	@echo "NIXPORT=$(NIXPORT)"
+	@echo "NIXUSER=$(NIXUSER)"
+
+.PHONY: vm/preflight
+vm/preflight:
+	@$(SSH_CMD) $(NIXUSER)@$(NIXADDR) " \
+		if ! command -v nixos-rebuild >/dev/null 2>&1; then \
+			echo 'ERROR: remote target does not have nixos-rebuild.'; \
+			echo '       This host is not ready for nixos-config vm deployment.'; \
+			echo '       target=$(NIXUSER)@$(NIXADDR):$(NIXPORT)'; \
+			if [ -r /etc/os-release ]; then \
+				. /etc/os-release; \
+				echo \"       remote_os=\$${PRETTY_NAME:-unknown}\"; \
+			else \
+				echo '       remote_os=unknown'; \
+			fi; \
+			echo '       expected: NixOS target with nixos-rebuild available'; \
+			exit 2; \
+		fi \
+	"
+
 vm:
+	$(MAKE) vm/vars
+	$(MAKE) vm/preflight
 	$(MAKE) vm/gc
 	$(MAKE) vm/copy
 	$(MAKE) vm/switch
@@ -140,3 +192,20 @@ vm:
 .PHONY: wsl
 wsl:
 	nix build ".#nixosConfigurations.wsl.config.system.build.installer"
+# Image publish helper defaults
+IMAGE_NAME ?=
+IMAGE_TAG ?=
+IMAGE_PLATFORM ?= linux/arm64
+IMAGE_CONTEXT ?= .
+IMAGE_DOCKERFILE ?= Dockerfile
+
+publish-image:
+	./scripts/publish-image.sh \
+		--image "$(IMAGE_NAME)" \
+		--tag "$(IMAGE_TAG)" \
+		--platform "$(IMAGE_PLATFORM)" \
+		--context "$(IMAGE_CONTEXT)" \
+		--dockerfile "$(IMAGE_DOCKERFILE)"
+
+new-disposable:
+	./scripts/new-disposable-machine.sh "$(NAME)" "$(ROLE)"

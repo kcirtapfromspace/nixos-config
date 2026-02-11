@@ -38,8 +38,8 @@
     tmux-dracula.url = "github:dracula/tmux";
     tmux-pain-control.flake = false;
     tmux-pain-control.url = "github:tmux-plugins/tmux-pain-control";
-    tree-sitter-proto.flake = false; 
-    tree-sitter-proto.url = "github:mitchellh/tree-sitter-proto"; 
+    tree-sitter-proto.flake = false;
+    tree-sitter-proto.url = "github:mitchellh/tree-sitter-proto";
     vim-copilot.flake = false;
     vim-copilot.url = "github:github/copilot.vim/v1.11.1";
   };
@@ -57,29 +57,44 @@
   in {
     nixosConfigurations.vm-aarch64-utm = mkSystem "vm-aarch64-utm" rec {
       system = "aarch64-linux";
-      user   = "kcirtap";
+      user = "kcirtap";
+    };
+
+    nixosConfigurations.disposable-rust-aarch64 = mkSystem "disposable-rust-aarch64" rec {
+      system = "aarch64-linux";
+      user = "kcirtap";
+    };
+
+    nixosConfigurations.disposable-python-aarch64 = mkSystem "disposable-python-aarch64" rec {
+      system = "aarch64-linux";
+      user = "kcirtap";
+    };
+
+    nixosConfigurations.disposable-zig-aarch64 = mkSystem "disposable-zig-aarch64" rec {
+      system = "aarch64-linux";
+      user = "kcirtap";
     };
 
     nixosConfigurations.vm-intel = mkSystem "vm-intel" rec {
       system = "x86_64-linux";
-      user   = "kcirtap";
+      user = "kcirtap";
     };
 
     nixosConfigurations.wsl = mkSystem "wsl" {
       system = "x86_64-linux";
-      user   = "kcirtap";
-      wsl    = true;
+      user = "kcirtap";
+      wsl = true;
     };
 
     darwinConfigurations.macbook-pro-m1 = mkSystem "macbook-pro-m1" {
       system = "aarch64-darwin";
-      user   = "thinkmac";
+      user = "thinkmac";
       darwin = true;
     };
 
     darwinConfigurations.thinkstudio = mkSystem "mac-studio-m1" {
       system = "aarch64-darwin";
-      user   = "thinkstudio";
+      user = "thinkstudio";
       darwin = true;
     };
   };
